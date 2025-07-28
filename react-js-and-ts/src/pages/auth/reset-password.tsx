@@ -23,7 +23,7 @@ import {
   CardTitle,
 } from "../../components/ui/card"
 import { ThemeToggle } from "../../components/theme/theme-toggle"
-import { useAuth } from "../../context/AuthContext"
+import { useAuthStore } from "../../store/authStore"
 
 const resetPasswordSchema = z
   .object({
@@ -38,7 +38,7 @@ const resetPasswordSchema = z
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
 export default function ResetPasswordPage() {
-  const { resetPassword, verifyResetPasswordToken } = useAuth()
+  const { resetPassword, verifyResetPasswordToken } = useAuthStore()
   const navigate = useNavigate()
   const { token } = useParams()
   const [tokenValid, setTokenValid] = useState<boolean | null>(null)

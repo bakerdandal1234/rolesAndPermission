@@ -1,14 +1,14 @@
 
 import type React from "react"
 import { Navigate, useLocation } from "react-router-dom"
-import { useAuth } from "../../context/AuthContext"
+import { useAuthStore } from "../../store/authStore"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuthStore()
   const location = useLocation()
 
   console.log("ProtectedRoute: loading=", loading, "user=", user)

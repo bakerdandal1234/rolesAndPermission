@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAuth } from "../../context/AuthContext"
+import { useAuthStore } from "../../store/authStore"
 import { Button } from "../../components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -26,7 +26,7 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
-    const { register: registerUser, registerErrors } = useAuth()
+    const { register: registerUser, registerErrors } = useAuthStore()
     console.log(registerErrors)
     const navigate = useNavigate()
 

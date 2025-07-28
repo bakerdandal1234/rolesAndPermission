@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from './theme/theme-toggle';
-import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../store/authStore';
 import { Button } from './ui/button';
-import { LogOut } from 'lucide-react'
+import { LogOut, ShoppingCart } from 'lucide-react'
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
   console.log("Navbar: user=", user);
 
   const Links = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' },
+    { name: 'Home', path: '/home' },
     { name: 'Dashboard', path: '/dashboard' }
   ];
 
@@ -57,6 +55,9 @@ const Navbar = () => {
 
 
           <div className="hidden md:flex items-center gap-3">
+            <Link to="/cart" className="text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 px-3 py-2 rounded-md transition-colors duration-200">
+              <ShoppingCart className="h-6 w-6" />
+            </Link>
             <ThemeToggle />
             {user ? (
               <>
@@ -117,6 +118,15 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))
+          )}
+          {user && (
+            <Link
+              to="/cart"
+              onClick={() => setIsOpen(false)}
+              className="block text-gray-800 dark:text-white px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              Cart
+            </Link>
           )}
 
 

@@ -30,7 +30,9 @@ app.use(
 
 app.use(express.json())
 app.use(cookieParser()); // هنا
-require('dotenv').config()
+const bookRoutes = require('./routes/bookRoutes');
+
+app.use('/api/books', bookRoutes);
 app.use(rootRoutes)
 app.use("/auth", authRouter);
 

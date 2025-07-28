@@ -2,8 +2,9 @@
 import React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useAuthStore } from "../../store/authStore"
 import * as z from "zod"
-import { useAuth } from "../../context/AuthContext"
+// import { useAuthStore } from "../../store/authStore"
 import { Button } from "../../components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -20,7 +21,7 @@ interface ForgotPasswordFormProps {
 }
 
 export function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
-  const { forgotPassword, error } = useAuth()
+  const { forgotPassword, error } = useAuthStore()
   const [success, setSuccess] = React.useState(false)
   const navigate = useNavigate()
   const form = useForm<ForgotPasswordFormValues>({

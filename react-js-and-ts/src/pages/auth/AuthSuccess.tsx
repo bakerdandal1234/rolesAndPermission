@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../store/authStore';
 
 const AuthSuccess = () => {
   const navigate = useNavigate();
-  const { user, loading, checkSession } = useAuth();
+  const { user, loading, checkSession } = useAuthStore();
 
   useEffect(() => {
     // الكوكيز مُرسَلة الآن من السيرفر، فتكفي هذه الدعوة

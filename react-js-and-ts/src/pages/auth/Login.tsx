@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAuth } from "../../context/AuthContext"
+import { useAuthStore } from "../../store/authStore"
 import { Button } from "../../components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -30,7 +30,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-    const { login, loginError } = useAuth()
+    const { login, loginError } = useAuthStore()
     const navigate = useNavigate()
     const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false)
 

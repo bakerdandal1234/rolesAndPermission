@@ -1,12 +1,12 @@
 "use client"
-import { useAuth } from "../context/AuthContext"
+import { useAuthStore } from "../store/authStore"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { ThemeToggle } from "../components/theme/theme-toggle"
 import { User, Mail, LogOut } from "lucide-react"
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuthStore()
 
   const handleLogout = async () => {
     try {

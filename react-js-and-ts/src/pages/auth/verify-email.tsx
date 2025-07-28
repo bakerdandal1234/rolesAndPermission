@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { useAuth } from "../../context/AuthContext"
+import { useAuthStore } from "../../store/authStore"
 import { Button } from "../../components/ui/button"
 import {
   Card,
@@ -18,7 +18,7 @@ import {
 import { Input } from "../../components/ui/input"
 
 export default function VerifyEmailPage() {
-  const { verifyEmail, resendVerificationEmail } = useAuth()
+  const { verifyEmail, resendVerificationEmail } = useAuthStore()
   const navigate = useNavigate()
   const { token } = useParams<{ token: string }>()
 
