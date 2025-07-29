@@ -3,17 +3,18 @@ import type { Book, CartItem } from '../types/book';
 
 interface CartState {
   cart: CartItem[];
-  addToCart: (book: Book, quantity: number) => void;
+  addToCart: (book: Book, quantity: number, selectedImage?: string) => void;
   removeFromCart: (bookId: string) => void;
   updateQuantity: (bookId: string, newQuantity: number) => void;
   clearCart: () => void;
   total: () => number;
+  getCartCount: () => number;
 }
 
 const useCartStore = create<CartState>((set, get) => ({
   cart: [],
 
-  addToCart: (book: Book, quantity: number) =>
+  addToCart: (book: Book, quantity: number, selectedImage?: string) =>
     set((state) => {
       const existing = state.cart.find((item) => item._id === book._id);
       if (existing) {
@@ -26,7 +27,7 @@ const useCartStore = create<CartState>((set, get) => ({
         };
       } else {
         return {
-          cart: [...state.cart, { ...book, quantity }],
+          cart: [...state.cart, { ...book, quantity, selectedImage }],
         };
       }
     }),
@@ -58,6 +59,9 @@ const useCartStore = create<CartState>((set, get) => ({
       (sum, item) => sum + item.price * item.quantity,
       0
     );
+  },
+  getCartCount: () => {
+    return get().cart.reduce((total, item) => total + item.quantity, 0);
   },
 }));
 

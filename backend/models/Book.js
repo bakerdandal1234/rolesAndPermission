@@ -19,10 +19,11 @@ const bookSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  image: {
-    type: String,
-    required: false,
-  },
+ images: [{
+  type: String,
+  required: false,
+}]
+,
   stock: {
     type: Number,
     required: true,

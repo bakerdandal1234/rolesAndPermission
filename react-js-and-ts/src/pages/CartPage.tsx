@@ -31,7 +31,7 @@ function CartPage() {
           {cart.map((item) => (
             <div key={item._id} className="flex items-center border-b border-gray-200 dark:border-gray-700 pb-4">
               <img
-                src={item.image}
+                src={item.selectedImage || (item.images && item.images[0])}
                 alt={item.title}
                 className="w-24 h-24 object-cover rounded-md mr-6"
               />

@@ -4,11 +4,13 @@ import { ThemeToggle } from './theme/theme-toggle';
 import { useAuthStore } from '../store/authStore';
 import { Button } from './ui/button';
 import { LogOut, ShoppingCart } from 'lucide-react'
+import useCartStore from '../store/cartStore';
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuthStore();
   console.log("Navbar: user=", user);
-
+  const cartCount = useCartStore((state) => state.getCartCount());
   const Links = [
     { name: 'Home', path: '/home' },
     { name: 'Dashboard', path: '/dashboard' }
@@ -55,8 +57,13 @@ const Navbar = () => {
 
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/cart" className="text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 px-3 py-2 rounded-md transition-colors duration-200">
+            <Link to="/cart" className="relative text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 px-3 py-2 rounded-md transition-colors duration-200">
               <ShoppingCart className="h-6 w-6" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
             </Link>
             <ThemeToggle />
             {user ? (

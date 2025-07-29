@@ -37,25 +37,24 @@ const getBookById = async (req, res) => {
 // @access  Private/Admin
 const createBook = async (req, res) => {
   const { title, author, summary, price, stock } = req.body;
-  const image = req.file;
+  const images = req.files;
+  let imageUrls = [];
 
-  let imageUrl = '';
-
-  if (image) {
-    try {
+  if (images && images.length > 0) {
+    for (const image of images) {
       const form = new FormData();
       form.append('image', image.buffer.toString('base64'));
-      const response = await axios.post(`https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`, form, {
-        headers: {
-          ...form.getHeaders()
-        }
-      });
-      imageUrl = response.data.data.url;
-    } catch (error) {
-      console.error('Error uploading image to imgbb:', error);
-      return res.status(500).json({ message: 'Error uploading image' });
+
+      const response = await axios.post(
+        `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+        form,
+        { headers: { ...form.getHeaders() } }
+      );
+
+      imageUrls.push(response.data.data.url);
     }
   }
+
 
   try {
     const book = new Book({
@@ -64,7 +63,7 @@ const createBook = async (req, res) => {
       summary,
       price,
       stock,
-      image: imageUrl,
+      images: imageUrls,
     });
 
     const createdBook = await book.save();
@@ -79,12 +78,23 @@ const createBook = async (req, res) => {
 // @access  Private/Admin
 const updateBook = async (req, res) => {
   const { title, author, summary, price, stock } = req.body;
-  const image = req.file;
+  const images = req.files;
+let imageUrls = [];
 
-  console.log('updateBook - req.file:', image);
+if (images && images.length > 0) {
+  for (const image of images) {
+    const form = new FormData();
+    form.append('image', image.buffer.toString('base64'));
 
-  let imageUrl;
+    const response = await axios.post(
+      `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+      form,
+      { headers: { ...form.getHeaders() } }
+    );
 
+    imageUrls.push(response.data.data.url);
+  }
+}
   try {
     const book = await Book.findById(req.params.id);
 
@@ -92,27 +102,13 @@ const updateBook = async (req, res) => {
       return res.status(404).json({ message: 'Book not found' });
     }
 
-    if (image) {
-      try {
-        const form = new FormData();
-        form.append('image', image.buffer.toString('base64'));
-        const response = await axios.post(`https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`, form, {
-          headers: {
-            ...form.getHeaders()
-          }
-        });
-        imageUrl = response.data.data.url;
-      } catch (error) {
-        console.error('Error uploading image to imgbb:', error);
-        return res.status(500).json({ message: 'Error uploading image' });
-      }
-    }
+    
 
     book.title = title || book.title;
     book.author = author || book.author;
     book.summary = summary || book.summary;
     book.price = price || book.price;
-    book.image = imageUrl || book.image;
+    book.images = imageUrls.length > 0 ? imageUrls : book.images;
     book.stock = stock || book.stock;
 
     const updatedBook = await book.save();

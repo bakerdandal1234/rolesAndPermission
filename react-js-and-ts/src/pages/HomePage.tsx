@@ -10,7 +10,7 @@ interface Book {
   title: string;
   author: string;
   summary: string;
-  image?: string;
+  images?: string[];
   price: number;
 }
 
@@ -34,7 +34,7 @@ function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {books.map((book) => (
           <Card key={book._id} className="dark:bg-gray-800 dark:border-gray-700">
-            {book.image && <img src={book.image} alt={book.title} className="w-full h-48 object-cover" />}
+            {book.images && <img src={book.images[0]} alt={book.title} className="w-full h-48 object-cover" />}
             <CardHeader>
               <CardTitle className="dark:text-white">title: {book.title}</CardTitle>
             </CardHeader>

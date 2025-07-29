@@ -3,7 +3,7 @@ export interface Book {
   title: string;
   author: string;
   summary: string;
-  image?: string;
+  images: string[];
   price: number;
   stock?: number;
 }
@@ -11,6 +11,7 @@ export interface Book {
 
 export interface CartItem extends Book {
   quantity: number;
+  selectedImage?: string; // Add this line
 }
 
 

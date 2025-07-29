@@ -22,7 +22,7 @@ function ProductDetailsPage() {
       try {
         const response = await axiosInstance.get(`api/books/${id}`);
         setProduct(response.data);
-        setSelectedImage(response.data.image);
+        setSelectedImage(response.data.images[0]);
         console.log("Product details:", response.data);
         console.log("Product stock:", response.data.stock);
       } catch (err) {
@@ -54,13 +54,30 @@ function ProductDetailsPage() {
         {/* Product Image */}
         <div>
           <div className="flex justify-center items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
-            <img
-              src={product.image}
-              alt={product.title}
-              className="max-w-full h-auto rounded-lg object-contain"
-              style={{ maxHeight: '500px' }}
-            />
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt={product.title}
+                className="max-w-full h-auto rounded-lg object-contain"
+                style={{ maxHeight: '500px' }}
+              />
+            )}
           </div>
+          {product.images && product.images.length > 1 && (
+            <div className="flex justify-center mt-4 space-x-2">
+              {product.images.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`Thumbnail ${index + 1}`}
+                  className={`w-20 h-20 object-cover rounded-md cursor-pointer ${
+                    selectedImage === img ? 'border-2 border-indigo-500' : 'border border-gray-300'
+                  }`}
+                  onClick={() => setSelectedImage(img)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Details */}
@@ -113,8 +130,10 @@ function ProductDetailsPage() {
             </div>
             <Button
               onClick={() => {
-                addToCart(product, quantity);
-                navigate('/cart');
+                if (product) {
+                  addToCart(product, quantity, selectedImage);
+                  navigate('/cart');
+                }
               }}
               className="w-full py-3 text-xl font-semibold bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-md"
               size="lg"

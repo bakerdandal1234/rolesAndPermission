@@ -7,7 +7,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-router.route('/').get(getBooks).post(authenticateUser, authorizeRole('admin'), upload.single('image'), createBook);
-router.route('/:id').get(getBookById).put(authenticateUser, authorizeRole('admin'), upload.single('image'), updateBook).delete(authenticateUser, authorizeRole('admin'), deleteBook);
+router.route('/').get(getBooks).post(authenticateUser, authorizeRole('admin'), upload.array('images', 5), createBook);
+router.route('/:id').get(getBookById).put(authenticateUser, authorizeRole('admin'), upload.array('image', 5), updateBook).delete(authenticateUser, authorizeRole('admin'), deleteBook);
 
 module.exports = router;

@@ -43,7 +43,7 @@ const AdminPage = () => {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [isCreateBookDialogOpen, setIsCreateBookDialogOpen] = useState(false);
   // Use a more complete state for the new book form
-  const [newBook, setNewBook] = useState<{ title: string; author: string; summary: string; price: number; stock: number; image?: File }>({ title: '', author: '', summary: '', price: 0, stock: 0 });
+  const [newBook, setNewBook] = useState<{ title: string; author: string; summary: string; price: number; stock: number; images?: File[] }>({ title: '', author: '', summary: '', price: 0, stock: 0 });
 
 
   // --- Queries ---
@@ -121,8 +121,18 @@ const AdminPage = () => {
   const handleEditBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBook) return;
-    console.log('Submitting edited book with image:', editingBook.image);
-    const success = await updateBook(editingBook);
+    const formData = new FormData();
+    formData.append('title', editingBook.title);
+    formData.append('author', editingBook.author);
+    formData.append('summary', editingBook.summary);
+    formData.append('price', editingBook.price.toString());
+    formData.append('stock', editingBook.stock.toString());
+    if (editingBook.images) {
+      editingBook.images.forEach((image) => {
+        formData.append('images', image);
+      });
+    }
+    const success = await updateBook(editingBook._id, formData);
     if (success) {
       setEditingBook(null);
     }
@@ -136,11 +146,21 @@ const AdminPage = () => {
 
   const handleCreateBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting new book with image:', newBook.image);
-    const success = await createBook(newBook);
+    const formData = new FormData();
+    formData.append('title', newBook.title);
+    formData.append('author', newBook.author);
+    formData.append('summary', newBook.summary);
+    formData.append('price', newBook.price.toString());
+    formData.append('stock', newBook.stock.toString());
+    if (newBook.images) {
+      newBook.images.forEach((image) => {
+        formData.append('images', image);
+      });
+    }
+    const success = await createBook(formData);
     if (success) {
       setIsCreateBookDialogOpen(false);
-      setNewBook({ title: '', author: '', summary: '', price: 0, stock: 0, image: undefined });
+      setNewBook({ title: '', author: '', summary: '', price: 0, stock: 0, images: undefined });
     }
   };
 
@@ -183,11 +203,9 @@ const AdminPage = () => {
   };
 
   const handleEditBookImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      console.log('e.target.files (Edit):', e.target.files);
-      const file = e.target.files[0];
-      console.log('Selected file (Edit):', file);
-      setEditingBook(prev => prev ? { ...prev, image: file } : null);
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setEditingBook(prev => prev ? { ...prev, images: [...(prev.images || []), ...newFiles] } : null);
     }
   };
 
@@ -198,11 +216,9 @@ const AdminPage = () => {
   };
 
   const handleCreateBookImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      console.log('e.target.files (Create):', e.target.files);
-      const file = e.target.files[0];
-      console.log('Selected file (Create):', file);
-      setNewBook(prev => ({ ...prev, image: file }));
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setNewBook(prev => ({ ...prev, images: [...(prev.images || []), ...newFiles] }));
     }
   };
 
@@ -290,7 +306,7 @@ const AdminPage = () => {
                   {books.map((book) => (
                     <tr key={book._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
                       <td className="py-3 px-6 text-left">
-                        {book.image && typeof book.image === 'string' && <img src={book.image} alt={book.title} className="h-16 w-16 object-cover" />}
+                        {book.images && book.images.length > 0 && <img src={book.images[0]} alt={book.title} className="h-16 w-16 object-cover" />}
                       </td>
                       <td className="py-3 px-6 text-left">{book.title}</td>
                       <td className="py-3 px-6 text-left">{book.author}</td>
@@ -416,10 +432,14 @@ const AdminPage = () => {
                 <Input name="stock" type="number" value={editingBook.stock || 0} onChange={handleEditBookChange} required />
               </div>
               <div>
-                <label className="block text-sm font-medium">Image</label>
-                <Input name="image" type="file" onChange={handleEditBookImageChange} />
-                {editingBook.image && typeof editingBook.image === 'string' && (
-                  <img src={editingBook.image} alt="Current" className="h-16 w-16 object-cover mt-2" />
+                <label className="block text-sm font-medium">Images</label>
+                <input name="images" type="file" multiple onChange={handleEditBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+                {editingBook.images && editingBook.images.length > 0 && (
+                  <div className="flex flex-wrap mt-2">
+                    {editingBook.images.map((img, index) => (
+                      <img key={index} src={img} alt={`Current ${index}`} className="h-16 w-16 object-cover mr-2 mb-2" />
+                    ))}
+                  </div>
                 )}
               </div>
               <DialogFooter>
@@ -459,8 +479,8 @@ const AdminPage = () => {
               <Input name="stock" type="number" value={newBook.stock} onChange={handleCreateBookChange} required />
             </div>
             <div>
-              <label className="block text-sm font-medium">Image</label>
-              <Input name="image" type="file" onChange={handleCreateBookImageChange} />
+              <label className="block text-sm font-medium">Images</label>
+              <input name="images" type="file" multiple onChange={handleCreateBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={loadingBooks}>
