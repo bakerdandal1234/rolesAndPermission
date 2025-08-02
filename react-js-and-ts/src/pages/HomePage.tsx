@@ -1,18 +1,10 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from '../lib/axios';
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 
-interface Book {
-  _id: string;
-  title: string;
-  author: string;
-  summary: string;
-  images?: string[];
-  price: number;
-}
+import { type Book } from '../types/book';
 
 const fetchBooks = async (): Promise<Book[]> => {
   const res = await axios.get('/api/books');
@@ -33,8 +25,9 @@ function HomePage() {
       <h1 className="text-3xl font-bold text-center">Available Books</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {books.map((book) => (
+          console.log("book", book.category.name),
           <Card key={book._id} className="dark:bg-gray-800 dark:border-gray-700">
-            {book.images && <img src={book.images[0]} alt={book.title} className="w-full h-48 object-cover" />}
+            {book.media && book.media.length > 0 && <img src={book.media[0].url} alt={book.title} className="w-full h-48 object-cover" />}
             <CardHeader>
               <CardTitle className="dark:text-white">title: {book.title}</CardTitle>
             </CardHeader>
@@ -42,6 +35,8 @@ function HomePage() {
               <p className="text-gray-400">by {book.author}</p>
               <p className="mt-4">{book.summary}</p>
               <p className="mt-2 text-lg font-semibold">Price: ${book.price}</p>
+              <p className="mt-2">Stock: {book.stock}</p>
+              <p className="mt-2">Category: {book.category.name}</p>
               <Link to={`/product/${book._id}`}>
                 <Button className="w-full mt-4">Product Details</Button>
               </Link>

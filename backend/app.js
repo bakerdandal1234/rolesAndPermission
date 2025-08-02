@@ -1,6 +1,11 @@
+require('dotenv').config();
 const express = require('express')
 const app = express()
-require('dotenv').config();
+
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+console.log('STRIPE_SECRET_KEY from .env:', process.env.STRIPE_SECRET_KEY);
+
 const session = require('express-session')
 const cookieParser = require("cookie-parser");
 const rootRoutes = require('./routes/authRoutes')
@@ -31,8 +36,16 @@ app.use(
 app.use(express.json())
 app.use(cookieParser()); // هنا
 const bookRoutes = require('./routes/bookRoutes');
+const mediaRoutes = require('./routes/mediaRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 app.use('/api/books', bookRoutes);
+app.use('/api', mediaRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use(rootRoutes)
 app.use("/auth", authRouter);
 

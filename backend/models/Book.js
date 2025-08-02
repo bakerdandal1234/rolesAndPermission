@@ -19,11 +19,15 @@ const bookSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
- images: [{
-  type: String,
-  required: false,
-}]
-,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  },
+ media: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  }],
   stock: {
     type: Number,
     required: true,

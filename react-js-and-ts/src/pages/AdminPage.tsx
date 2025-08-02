@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { useAuthStore } from '../store/authStore';
 import { useBookStore } from '../store/bookStore'; // Import the book store
+import { useCategoryStore } from '../store/categoryStore';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ const AdminPage = () => {
 
   // Book state from Zustand store
   const { books, loading: loadingBooks, error: booksError, getBooks, createBook, updateBook, deleteBook } = useBookStore();
+  const { categories, getCategories } = useCategoryStore();
 
   // Dialog states
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -43,7 +45,7 @@ const AdminPage = () => {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [isCreateBookDialogOpen, setIsCreateBookDialogOpen] = useState(false);
   // Use a more complete state for the new book form
-  const [newBook, setNewBook] = useState<{ title: string; author: string; summary: string; price: number; stock: number; images?: File[] }>({ title: '', author: '', summary: '', price: 0, stock: 0 });
+  const [newBook, setNewBook] = useState<{ title: string; author: string; summary: string; price: number; stock: number; media?: File[], category: string }>({ title: '', author: '', summary: '', price: 0, stock: 0, category: '' });
 
 
   // --- Queries ---
@@ -60,7 +62,8 @@ const AdminPage = () => {
   // Fetch books using the store
   useEffect(() => {
     getBooks();
-  }, [getBooks]);
+    getCategories();
+  }, [getBooks, getCategories]);
 
 
   // --- Mutations ---
@@ -127,9 +130,10 @@ const AdminPage = () => {
     formData.append('summary', editingBook.summary);
     formData.append('price', editingBook.price.toString());
     formData.append('stock', editingBook.stock.toString());
-    if (editingBook.images) {
-      editingBook.images.forEach((image) => {
-        formData.append('images', image);
+    formData.append('category', editingBook.category?._id || ''); // Add this line
+    if (editingBook.media) {
+      editingBook.media.forEach((image) => {
+        formData.append('media', image);
       });
     }
     const success = await updateBook(editingBook._id, formData);
@@ -152,15 +156,16 @@ const AdminPage = () => {
     formData.append('summary', newBook.summary);
     formData.append('price', newBook.price.toString());
     formData.append('stock', newBook.stock.toString());
-    if (newBook.images) {
-      newBook.images.forEach((image) => {
-        formData.append('images', image);
+    formData.append('category', newBook.category); // Add this line
+    if (newBook.media) {
+      newBook.media.forEach((image) => {
+        formData.append('media', image);
       });
     }
     const success = await createBook(formData);
     if (success) {
       setIsCreateBookDialogOpen(false);
-      setNewBook({ title: '', author: '', summary: '', price: 0, stock: 0, images: undefined });
+      setNewBook({ title: '', author: '', summary: '', price: 0, stock: 0, media: undefined,category: '' });
     }
   };
 
@@ -205,7 +210,7 @@ const AdminPage = () => {
   const handleEditBookImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setEditingBook(prev => prev ? { ...prev, images: [...(prev.images || []), ...newFiles] } : null);
+      setEditingBook(prev => prev ? { ...prev, media: newFiles } : null);
     }
   };
 
@@ -218,7 +223,7 @@ const AdminPage = () => {
   const handleCreateBookImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setNewBook(prev => ({ ...prev, images: [...(prev.images || []), ...newFiles] }));
+      setNewBook(prev => ({ ...prev, media: [...(prev.media || []), ...newFiles] }));
     }
   };
 
@@ -299,6 +304,7 @@ const AdminPage = () => {
                     <th className="py-3 px-6 text-left">Summary</th>
                     <th className="py-3 px-6 text-left">Price</th>
                     <th className="py-3 px-6 text-left">stock</th>
+                    <th className="py-3 px-6 text-left">Category</th>
                     <th className="py-3 px-6 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -306,13 +312,14 @@ const AdminPage = () => {
                   {books.map((book) => (
                     <tr key={book._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
                       <td className="py-3 px-6 text-left">
-                        {book.images && book.images.length > 0 && <img src={book.images[0]} alt={book.title} className="h-16 w-16 object-cover" />}
+                        {book.media && book.media.length > 0 && <img src={book.media[0].url} alt={book.title} className="h-16 w-16 object-cover" />}
                       </td>
                       <td className="py-3 px-6 text-left">{book.title}</td>
                       <td className="py-3 px-6 text-left">{book.author}</td>
                       <td className="py-3 px-6 text-left max-w-xs truncate">{book.summary}</td>
                       <td className="py-3 px-6 text-left">{book.price}</td>
                       <td className="py-3 px-6 text-left">{book.stock}</td>
+                      <td className="py-3 px-6 text-left">{book.category?.name}</td>
                       <td className="py-3 px-6 text-center">
                         <div className="flex item-center justify-center">
                           {canUpdate && <Button onClick={() => setEditingBook(book)} variant="default" className="mr-2">Edit</Button>}
@@ -432,12 +439,21 @@ const AdminPage = () => {
                 <Input name="stock" type="number" value={editingBook.stock || 0} onChange={handleEditBookChange} required />
               </div>
               <div>
+                <label className="block text-sm font-medium">Category</label>
+                <select name="category" value={editingBook.category?._id} onChange={handleEditBookChange} className="w-full p-2 border rounded bg-gray-700 text-white">
+                  <option value="">Select a category</option>
+                  {categories.map(category => (
+                    <option key={category._id} value={category._id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium">Images</label>
-                <input name="images" type="file" multiple onChange={handleEditBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
-                {editingBook.images && editingBook.images.length > 0 && (
+                <input name="media" type="file" multiple onChange={handleEditBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+                {editingBook.media && editingBook.media.length > 0 && (
                   <div className="flex flex-wrap mt-2">
-                    {editingBook.images.map((img, index) => (
-                      <img key={index} src={img} alt={`Current ${index}`} className="h-16 w-16 object-cover mr-2 mb-2" />
+                    {editingBook.media.map((img, index) => (
+                      <img key={index} src={typeof img === 'string' ? img : ('url' in img ? img.url : URL.createObjectURL(img))} alt={`Current ${index}`} className="h-16 w-16 object-cover mr-2 mb-2" />
                     ))}
                   </div>
                 )}
@@ -479,8 +495,17 @@ const AdminPage = () => {
               <Input name="stock" type="number" value={newBook.stock} onChange={handleCreateBookChange} required />
             </div>
             <div>
+              <label className="block text-sm font-medium">Category</label>
+              <select name="category" value={newBook.category} onChange={handleCreateBookChange} className="w-full p-2 border rounded bg-gray-700 text-white">
+                <option value="">Select a category</option>
+                {categories.map(category => (
+                  <option key={category._id} value={category._id}>{category.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium">Images</label>
-              <input name="images" type="file" multiple onChange={handleCreateBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+              <input name="media" type="file" multiple onChange={handleCreateBookImageChange} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={loadingBooks}>

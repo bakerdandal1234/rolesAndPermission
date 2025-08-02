@@ -1,1 +1,2 @@
 /// <reference types="vite/client" />
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51QhHVCDGb11cxaDLGmxOeirbboIjAjgH3ZtnRdggZAZVvrd8SOtuDSSQxCrSlNR56eY0uAWGv1icj0xkvRLTNUwR00AZQWkzS6

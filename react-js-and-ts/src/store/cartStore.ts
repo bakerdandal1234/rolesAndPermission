@@ -1,65 +1,89 @@
 import { create } from 'zustand';
-import type { Book, CartItem } from '../types/book';
+import axios from '../lib/axios';
+import type { Book } from '../types/book';
+
+interface CartItem {
+  book: Book;
+  quantity: number;
+  price: number;
+  image?: string;
+}
 
 interface CartState {
   cart: CartItem[];
-  addToCart: (book: Book, quantity: number, selectedImage?: string) => void;
-  removeFromCart: (bookId: string) => void;
-  updateQuantity: (bookId: string, newQuantity: number) => void;
-  clearCart: () => void;
+  loading: boolean;
+  error: string | null;
+  fetchCart: () => Promise<void>;
+  addToCart: (bookId: string, quantity: number, price: number, image?: string) => Promise<void>;
+  removeFromCart: (bookId: string) => Promise<void>;
+  updateQuantity: (bookId: string, newQuantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   total: () => number;
   getCartCount: () => number;
 }
 
 const useCartStore = create<CartState>((set, get) => ({
   cart: [],
+  loading: false,
+  error: null,
 
-  addToCart: (book: Book, quantity: number, selectedImage?: string) =>
-    set((state) => {
-      const existing = state.cart.find((item) => item._id === book._id);
-      if (existing) {
-        return {
-          cart: state.cart.map((item) =>
-            item._id === book._id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          ),
-        };
-      } else {
-        return {
-          cart: [...state.cart, { ...book, quantity, selectedImage }],
-        };
-      }
-    }),
+  fetchCart: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get('/api/cart');
+      set({ cart: response.data.items, loading: false });
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to fetch cart', loading: false });
+    }
+  },
 
-  removeFromCart: (bookId: string) =>
-    set((state) => ({
-      cart: state.cart.filter((item) => item._id !== bookId),
-    })),
+  addToCart: async (bookId, quantity, price, image) => {
+    set({ loading: true, error: null });
+    try {
+      await axios.post('/api/cart', { bookId, quantity, price, image });
+      await get().fetchCart();
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to add to cart', loading: false });
+    }
+  },
 
-  updateQuantity: (bookId: string, newQuantity: number) =>
-    set((state) => ({
-      cart: state.cart
-        .map((item) => {
-          if (item._id === bookId) {
-            const maxQuantity = item.stock || Infinity;
-            const quantity = Math.min(Math.max(1, newQuantity), maxQuantity);
-            return { ...item, quantity };
-          }
-          return item;
-        })
-        .filter((item) => item.quantity > 0),
-    })),
+  removeFromCart: async (bookId) => {
+    set({ loading: true, error: null });
+    try {
+      await axios.delete(`/api/cart/${bookId}`);
+      await get().fetchCart();
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to remove from cart', loading: false });
+    }
+  },
 
-  clearCart: () => set({ cart: [] }),
+  updateQuantity: async (bookId, newQuantity) => {
+    set({ loading: true, error: null });
+    try {
+      await axios.put(`/api/cart/${bookId}`, { quantity: newQuantity });
+      await get().fetchCart();
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to update quantity', loading: false });
+    }
+  },
+
+  clearCart: async () => {
+    set({ loading: true, error: null });
+    try {
+      await axios.delete('/api/cart');
+      await get().fetchCart();
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Failed to clear cart', loading: false });
+    }
+  },
 
   total: () => {
-    const state = get();
-    return state.cart.reduce(
+    return get().cart.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
   },
+
   getCartCount: () => {
     return get().cart.reduce((total, item) => total + item.quantity, 0);
   },

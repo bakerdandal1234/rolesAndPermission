@@ -1,4 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe("pk_test_51QhHVCDGb11cxaDLGmxOeirbboIjAjgH3ZtnRdggZAZVvrd8SOtuDSSQxCrSlNR56eY0uAWGv1icj0xkvRLTNUwR00AZQWkzS6");
 import ProtectedRoute from "./components/auth/Protectedoute"
 import { ThemeProvider } from "./components/theme/theme-provider"
 // Auth Pages
@@ -17,10 +21,18 @@ import AuthSuccess from "./pages/auth/AuthSuccess"
 import Welcome from "./pages/Welcome"
 import ProductDetailsPage from "./pages/ProductDetailsPage"
 import CartPage from "./pages/CartPage"
-
+import CheckoutPage from "./pages/CheckoutPage"
+import OrderHistoryPage from "./pages/OrderHistoryPage"
+import { useEffect } from "react";
+import { useAuthStore } from "./store/authStore";
 function App() {
+   const checkSession = useAuthStore((state) => state.checkSession);
+  useEffect(() => {
+    checkSession(); // التحقق من الجلسة عند بدء التطبيق
+  }, []);
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <Elements stripe={stripePromise}>
         <Router>
           <Navbar />
           <Routes>
@@ -50,6 +62,22 @@ function App() {
             />
             <Route path='/product/:id' element={<ProductDetailsPage />} />
             <Route path='/cart' element={<CartPage />} />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order-history"
+              element={
+                <ProtectedRoute>
+                  <OrderHistoryPage />
+                </ProtectedRoute>
+              }
+            />
             {/* Protected Routes */}
             <Route
               path="/dashboard"
@@ -66,6 +94,7 @@ function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Router>
+      </Elements>
     </ThemeProvider>
   )
 }

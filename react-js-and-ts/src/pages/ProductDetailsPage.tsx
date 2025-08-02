@@ -15,14 +15,16 @@ function ProductDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
   const addToCart = useCartStore((state) => state.addToCart);
+  const fetchCart = useCartStore((state) => state.fetchCart);
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchCart();
     const fetchProduct = async () => {
       try {
         const response = await axiosInstance.get(`api/books/${id}`);
         setProduct(response.data);
-        setSelectedImage(response.data.images[0]);
+        setSelectedImage(response.data.media[0]?.url);
         console.log("Product details:", response.data);
         console.log("Product stock:", response.data.stock);
       } catch (err) {
@@ -63,17 +65,17 @@ function ProductDetailsPage() {
               />
             )}
           </div>
-          {product.images && product.images.length > 1 && (
+          {product.media && product.media.length > 1 && (
             <div className="flex justify-center mt-4 space-x-2">
-              {product.images.map((img, index) => (
+              {product.media.map((img, index) => (
                 <img
                   key={index}
-                  src={img}
+                  src={img.url}
                   alt={`Thumbnail ${index + 1}`}
                   className={`w-20 h-20 object-cover rounded-md cursor-pointer ${
-                    selectedImage === img ? 'border-2 border-indigo-500' : 'border border-gray-300'
+                    selectedImage === img.url ? 'border-2 border-indigo-500' : 'border border-gray-300'
                   }`}
-                  onClick={() => setSelectedImage(img)}
+                  onClick={() => setSelectedImage(img.url)}
                 />
               ))}
             </div>
@@ -95,6 +97,8 @@ function ProductDetailsPage() {
             <p className="text-5xl font-bold text-indigo-600 dark:text-indigo-400 mb-6">
               ${product.price.toFixed(2)}
             </p>
+            <p className="text-gray-600 dark:text-gray-400">categories:{product.category.name}</p>
+             <p className="text-gray-600 dark:text-gray-400">stock:{product.stock}</p>
           </div>
 
           {/* Quantity and Add to Cart */}
@@ -129,9 +133,9 @@ function ProductDetailsPage() {
               </span>
             </div>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (product) {
-                  addToCart(product, quantity, selectedImage);
+                  await addToCart(product._id, quantity, product.price, selectedImage);
                   navigate('/cart');
                 }
               }}

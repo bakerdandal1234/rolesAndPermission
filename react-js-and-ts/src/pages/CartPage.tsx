@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import useCartStore from '../store/cartStore';
 import { Button } from '../components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import type { Book } from '../types/book';
+
+interface CartItem {
+  book: Book;
+  quantity: number;
+  price: number;
+  image?: string;
+  title:string;
+  category: { name: string };
+  name: string;
+}
 
 function CartPage() {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCartStore();
+  const { cart, removeFromCart, updateQuantity, clearCart, fetchCart } = useCartStore();
+ const navigate = useNavigate();
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -28,49 +43,57 @@ function CartPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-6">
-          {cart.map((item) => (
-            <div key={item._id} className="flex items-center border-b border-gray-200 dark:border-gray-700 pb-4">
-              <img
-                src={item.selectedImage || (item.images && item.images[0])}
-                alt={item.title}
-                className="w-24 h-24 object-cover rounded-md mr-6"
-              />
-              <div className="flex-grow">
-                <h2 className="text-xl font-semibold">{item.title}</h2>
-                <p className="text-gray-600 dark:text-gray-400">by {item.author}</p>
-                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">${item.price.toFixed(2)}</p>
+          {cart.map((item) => {
+            console.log('Cart Item:', item);
+            if (!item.book) {
+              console.warn('Skipping cart item due to missing book data:', item);
+              return null; // Skip rendering this item if book data is missing
+            }
+            return (
+              <div key={item.book._id} className="flex items-center border-b border-gray-200 dark:border-gray-700 pb-4">
+                <img
+                  src={item.image || (item.book.media && item.book.media[0]?.url)}
+                  alt={item.book.title}
+                  className="w-24 h-24 object-cover rounded-md mr-6"
+                />
+                <div className="flex-grow">
+                  <h2 className="text-xl font-semibold">{item.book.title}</h2>
+                  <p className="text-gray-600 dark:text-gray-400">by {item.book.author}</p>
+                  <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">${item.price.toFixed(2)}</p>
+                   <p className="text-gray-600 dark:text-gray-400">category: {item.book.category.name}</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button
+                    onClick={async () => await updateQuantity(item.book._id, item.quantity - 1)}
+                    disabled={item.quantity <= 1}
+                    className="px-3 py-1 text-base"
+                  >
+                    -
+                  </Button>
+                  <span className="text-lg font-medium">{item.quantity}</span>
+                  <Button
+                    onClick={async () => {
+                      if (item.quantity < (item.book.stock || Infinity)) {
+                        await updateQuantity(item.book._id, item.quantity + 1);
+                      } else {
+                        alert(`Max stock is ${item.book.stock || 0}. You cannot add more.`);
+                      }
+                    }}
+                    className="px-3 py-1 text-base"
+                  >
+                    +
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => await removeFromCart(item.book._id)}
+                    className="px-3 py-1 text-base"
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Button
-                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                  disabled={item.quantity <= 1}
-                  className="px-3 py-1 text-base"
-                >
-                  -
-                </Button>
-                <span className="text-lg font-medium">{item.quantity}</span>
-                <Button
-                  onClick={() => {
-                    if (item.quantity < (item.stock || Infinity)) {
-                      updateQuantity(item._id, item.quantity + 1);
-                    } else {
-                      alert(`Max stock is ${item.stock || 0}. You cannot add more.`);
-                    }
-                  }}
-                  className="px-3 py-1 text-base"
-                >
-                  +
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => removeFromCart(item._id)}
-                  className="px-3 py-1 text-base"
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order Summary */}
@@ -84,12 +107,12 @@ function CartPage() {
             <span>Total Price:</span>
             <span className="text-indigo-600 dark:text-indigo-400">${totalPrice.toFixed(2)}</span>
           </div>
-          <Button className="w-full py-3 text-lg font-semibold bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+          <Button className="w-full py-3 text-lg font-semibold bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors" onClick={() => navigate('/checkout')}>
             Proceed to Checkout
           </Button>
           <Button
             variant="outline"
-            onClick={clearCart}
+            onClick={async () => await clearCart()}
             className="w-full py-3 text-lg font-semibold mt-4 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
           >
             Clear Cart
